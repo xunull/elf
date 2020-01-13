@@ -1,5 +1,11 @@
 package service_core
 
+type WorkerStruct struct {
+	RunningFlag bool
+	Stop        chan int
+	Suspend     chan int
+}
+
 type FireService interface {
 	Fire()
 }
