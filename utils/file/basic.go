@@ -2,7 +2,9 @@ package file
 
 import (
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/hex"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"os"
@@ -36,14 +38,14 @@ func Copy(src, dst string) error {
 }
 
 /**
-可以删除文件或者空目录
+删除文件或者空目录
 */
 func Delete(path string) error {
 	return os.Remove(path)
 }
 
 /**
-可以删除目录
+删除目录以及所有
 */
 func DeleteAll(path string) error {
 	return os.RemoveAll(path)
@@ -61,12 +63,27 @@ func Backup() {
 
 }
 
+// os.ModePerm 是777并不好
 func Mkdir(path string) error {
 	return os.Mkdir(path, os.ModePerm)
 }
 
 func MkdirAll(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
+}
+
+func CreateDir(directory string) error {
+	_, err := os.Stat(directory)
+	if err != nil {
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(directory, os.ModePerm)
+			if err != nil {
+				return errors.Wrapf(err, "creating directory '%v'", directory)
+			}
+		}
+		return errors.Wrapf(err, "checking directory %v", directory)
+	}
+	return nil
 }
 
 func PathExists(path string) (bool, error) {
@@ -83,6 +100,16 @@ func PathExists(path string) (bool, error) {
 func ReadFile(path string) ([]byte, error) {
 	return ioutil.ReadFile(path)
 
+}
+
+func SHA1(filename string) string {
+	h := sha1.New()
+	s, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return ""
+	}
+	h.Write(s)
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func ContentMd5(path string) (string, error) {
